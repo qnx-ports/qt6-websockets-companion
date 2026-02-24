@@ -1,0 +1,76 @@
+# Alpine-Maintainer: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Felix Xing <fxing@qnx.com>
+pkgname=qt6-websockets
+pkgver=6.10.0
+pkgrel=0
+pkgdesc="Provides WebSocket communication compliant with RFC 6455"
+url="https://qt.io/"
+arch="all"
+license="LGPL-2.1-only AND LGPL-3.0-only AND GPL-3.0-only AND Qt-GPL-exception-1.0"
+depends="libc++
+    qnx-io-sock
+    qt6-base
+    qt6-declarative
+    "
+depends_dev="
+    qt6-base-dev
+    qt6-base-private-dev
+    qt6-declarative-dev
+    qt6-declarative-private-dev
+    "
+makedepends="$depends_dev
+    cmake
+    perl
+    ninja
+    "
+# needs a .so from the main package
+depends_dev="$depends_dev $pkgname=$pkgver-r$pkgrel"
+subpackages="$pkgname-dbg $pkgname-dev"
+source="https://download.qt.io/official_releases/qt/${pkgver%.*}/${pkgver/_/-}/submodules/qtwebsockets-everywhere-src-${pkgver/_/-}.tar.xz"
+options="!check" # No usable tests
+builddir="$srcdir/qtwebsockets-everywhere-src-${pkgver/_/-}"
+
+build() {
+    # It's qcc here, but compiled with clang on the selfhosted system
+    if [[ $CARCH == "x86_64" ]]; then
+        _triplet="qnx-x86-64-qcc"
+    elif [[ $CARCH == "aarch64" ]]; then
+        _triplet="qnx-aarch64le-qcc"
+    else
+        die "$CARCH not supported"
+    fi
+
+    _warn="-Wno-character-conversion"
+
+    export CC=clang
+    export CXX=clang++
+    export CFLAGS="$_warn"
+    export CXXFLAGS="$_warn"
+    export LDFLAGS="-lsocket"
+    export LD_LIBRARY_PATH="$builddir/build/lib:$LD_LIBRARY_PATH"
+
+    cmake -B build -G Ninja \
+        -DCMAKE_SKIP_RPATH=ON \
+        -DQT_QMAKE_TARGET_MKSPEC=$_triplet \
+        -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_MESSAGE_LOG_LEVEL=STATUS \
+        -DFEATURE_pkg_config=ON
+
+    cmake --build build --parallel
+}
+
+package() {
+    DESTDIR="$pkgdir" cmake --install build
+}
+
+dev() {
+    default_dev
+
+    amove usr/lib/qt6/sbom
+}
+
+sha512sums="
+fe83f256f94cf96339e29c0cd60f52e95e1b4b4dd474210c1cb845c50809202a8c41db170ecfe960726090a977353dc74b5608644f6e2577dca6c48d78d54bb7  qtwebsockets-everywhere-src-6.10.0.tar.xz
+"
