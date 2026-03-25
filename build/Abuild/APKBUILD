@@ -2,7 +2,7 @@
 # Maintainer: Felix Xing <fxing@qnx.com>
 pkgname=qt6-websockets
 pkgver=6.10.0
-pkgrel=${pkgrel:-0}
+pkgrel=0
 pkgdesc="Provides WebSocket communication compliant with RFC 6455"
 url="https://qt.io/"
 arch="all"
@@ -71,7 +71,6 @@ dev() {
     amove usr/lib/qt6/sbom
 }
 
-options="$options ${DISABLE_CHECK:+!check}"
 sha512sums="
 fe83f256f94cf96339e29c0cd60f52e95e1b4b4dd474210c1cb845c50809202a8c41db170ecfe960726090a977353dc74b5608644f6e2577dca6c48d78d54bb7  qtwebsockets-everywhere-src-6.10.0.tar.xz
 "
